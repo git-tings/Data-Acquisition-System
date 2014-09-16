@@ -59,7 +59,7 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
     private InputStream input;
     private OutputStream output;
 	final static int timeout = 2000;
-	private String received = "";
+	private StringBuffer received;
 	private int charCount = 0;
 	
 	public ControlPanel(DataLogger _dl) {
@@ -69,6 +69,7 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
 		this.setBorder(new TitledBorder (new EtchedBorder(), "Control Panel"));
 		this.setLayout(new GridLayout(4, 0, 0, 0));
     	portMap = new HashMap<String, CommPortIdentifier>();
+    	received = new StringBuffer();
     	updatePortList();
 	}
 
@@ -190,7 +191,7 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
     }
 
 	private void connectSerial() {
-    	received = "";
+    	received.setLength(0);
     	String selectedPort = cmboxCommPorts.getSelectedItem().toString();
     	selectedPortIdentifier = (CommPortIdentifier)portMap.get(selectedPort);
     	CommPort commPort;
@@ -208,7 +209,7 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
     }
     
     private void disconnectSerial() {
-    	received = "";
+    	received.setLength(0); //empties the buffer
     	try {
     		serialPort.removeEventListener();
     		serialPort.close();
@@ -249,7 +250,7 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
         if (evt.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
             try {
                 byte singleData = (byte)input.read();
-                received += new String(new byte[] {singleData});
+                received.append(new String(new byte[] {singleData}));
                 //System.out.println(received);
                 charCount++;
                 if (charCount>10) {
@@ -266,18 +267,19 @@ public class ControlPanel extends JPanel implements SerialPortEventListener {
     
     private void extractPacket () {
     	String str;
-    	if (received.contains("*") && received.contains("&")) {
-    		if (received.indexOf("*") < received.indexOf("&")) {
-    			str = received.substring(received.indexOf("*")+1, received.indexOf("&"));
-    			received = received.substring(received.indexOf("&")+1, received.length());
-    			//pa.analyzePacket(str);
+    	String temp = received.toString();
+    	if (temp.contains("*") && temp.contains("&")) {
+    		if (temp.indexOf("*") < temp.indexOf("&")) {
+    			str = temp.substring(temp.indexOf("*")+1, temp.indexOf("&"));
+    			temp = temp.substring(temp.indexOf("&")+1, temp.length());
     			dl.printData(analyzePacket(str));
-    			
     		}
     	}
 		else {
-			received = received.substring(received.indexOf("*"));
+			temp = temp.substring(temp.indexOf("*"));
 		}
+		received.setLength(0);
+		received.append(temp);
     }
 
     private void writeData() {

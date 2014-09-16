@@ -15,7 +15,7 @@ public class DataLogger extends JPanel{
 	private PrintStream printStream;
 	
 	public DataLogger () {
-		//super();
+		super();
 		textArea = new JTextArea();
 		scroller = new JScrollPane(textArea);
 		printStream = new PrintStream(new TextAreaOutputStream(textArea));
